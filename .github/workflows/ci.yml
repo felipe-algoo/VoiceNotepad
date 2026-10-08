@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dev tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check src tests
+      - name: Ruff format check
+        run: ruff format --check src tests
+      - name: Mypy
+        run: mypy src
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Compile check
+        run: python -m compileall -q src
+      - name: Pytest
+        run: pytest -q --maxfail=1
+
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Import smoke test
+        run: |
+          python -c "import src.app as a; print(a.app.title)"
+          python -c "import src.security as s; print(s.content_fingerprint('x'))"
+          python -c "import src.memory as m; import tempfile, pathlib; d=tempfile.mkdtemp(); mem=m.EpisodicMemory(pathlib.Path(d)/'t.db'); sid=mem.create_session(); assert mem.session_exists(sid); print('memory ok')"
+      - name: Header smoke test
+        run: |
+          python - <<'PY'
+          import asyncio
+          from httpx import ASGITransport, AsyncClient
+          from src.app import app
+
+          async def main():
+              app.state.model_ready = False
+              transport = ASGITransport(app=app, raise_app_exceptions=False)
+              async with AsyncClient(transport=transport, base_url="http://t") as c:
+                  r = await c.get("/api/health")
+                  assert r.status_code == 200
+                  assert "Content-Security-Policy" in r.headers
+                  assert r.headers["X-Frame-Options"] == "DENY"
+                  print("headers ok")
+
+          asyncio.run(main())
+          PY
