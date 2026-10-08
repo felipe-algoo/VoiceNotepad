@@ -1,0 +1,55 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+  "E", "F", "W",
+  "I",
+  "B",
+  "C4",
+  "UP",
+  "SIM",
+  "RUF",
+  "S",
+  "ASYNC",
+]
+ignore = [
+  "S101",
+  "S104",
+  "S311",
+  "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S", "B011"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+warn_no_return = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+ignore_missing_imports = false
+plugins = []
+
+[[tool.mypy.overrides]]
+module = [
+  "faster_whisper.*",
+  "webrtcvad.*",
+  "soundfile.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+timeout = 60
+asyncio_mode = "auto"
