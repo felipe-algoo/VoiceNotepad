@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Notepad</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-theme="light">
+<header class="topbar">
+  <div class="brand">
+    <span class="dot" id="vadDot"></span>
+    <span class="title">Voice Notepad</span>
+  </div>
+  <div class="controls">
+    <label class="field">
+      <span data-i18n="ui_lang">Interface</span>
+      <select id="uiLang">
+        <option value="pt">Português (BR)</option>
+        <option value="en">English</option>
+      </select>
+    </label>
+    <label class="field">
+      <span data-i18n="rec_lang">Transcription</span>
+      <select id="recLang">
+        <option value="pt">Português (BR)</option>
+        <option value="en">English</option>
+        <option value="auto">Auto</option>
+      </select>
+    </label>
+    <button id="themeBtn" class="icon-btn" title="Theme">◑</button>
+  </div>
+</header>
+
+<main>
+  <section class="editor-wrap">
+    <div id="editor" class="editor" contenteditable="true" spellcheck="true"><span id="committed"></span><span id="interim" contenteditable="false"></span></div>
+  </section>
+
+  <section class="actions">
+    <button id="recordBtn" class="primary-btn">
+      <span class="rec-icon">●</span>
+      <span id="recordLabel" data-i18n="record">Record</span>
+    </button>
+    <button id="copyBtn" data-i18n="copy">Copy</button>
+    <button id="clearBtn" data-i18n="clear">Clear</button>
+    <button id="exportBtn" data-i18n="export">Export</button>
+    <button id="historyBtn" data-i18n="history">History</button>
+  </section>
+
+  <section class="statusbar">
+    <div id="status" data-i18n="ready">Ready</div>
+    <div id="counts"></div>
+    <div class="conf">
+      <span data-i18n="confidence">Confidence</span>
+      <span id="confBar"><span id="confFill"></span></span>
+      <span id="confValue">0%</span>
+    </div>
+  </section>
+</main>
+
+<aside id="historyPanel" class="history hidden">
+  <div class="history-head">
+    <strong data-i18n="history">History</strong>
+    <button id="historyClose" class="icon-btn">×</button>
+  </div>
+  <ul id="historyList"></ul>
+</aside>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/app.js" defer></script>
+</body>
+</html>
